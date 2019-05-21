@@ -5,6 +5,7 @@ import matplotlib.patches as patches
 from matplotlib.patches import Rectangle
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
+import shapely.geometry
 
 
 class Navigate:
@@ -98,6 +99,25 @@ class PRMController:
         self.checkIfCollisonFree()
         self.findNearestNeighbour()
 
+    def checkLineCollision(self, start_line, end_line):
+        collision = False
+        line = shapely.geometry.LineString([start_line, end_line])
+        for obs in self.allObs:
+            if(isWall(obs)):
+                uniqueCords = np.unique(obs.allCords, axis=0)
+                wall = shapely.geometry.LineString(
+                    uniqueCords)
+                if(line.intersection(wall)):
+                    print(wall, line, line.intersection(wall))
+                    collision = True
+            else:
+                obstacleShape = shapely.geometry.Polygon(
+                    obs.allCords)
+                collision = line.intersects(obstacleShape)
+            if(collision):
+                return True
+        return False
+
     def findNearestNeighbour(self):
         X = self.collisionFreePoints
         knn = NearestNeighbors(n_neighbors=5)
@@ -105,9 +125,17 @@ class PRMController:
         distances, indices = knn.kneighbors(X)
         print(indices[0])
         for i, p in enumerate(X):
+            # print(p, indices[i])
             for i in X[indices[i]]:
-                # self.checkPointCollision()
-                plt.plot([p[0], i[0]], [p[1], i[1]])
+                start_line = [p[0], i[0]]
+                end_line = [p[1], i[1]]
+                if(not self.checkPointCollision(start_line) and not self.checkPointCollision(end_line)):
+                    # try:
+                    if(not self.checkLineCollision(start_line, end_line)):
+                            # self.checkLineCollision(line)
+                        plt.plot(start_line, end_line)
+                    # except:
+                        # print(start_line, end_line, Exception)
 
     def genCoords(self):
         self.coordsList = np.random.randint(
@@ -170,7 +198,7 @@ def main(args):
 
     drawMap(allObs, current, destination)
 
-    prm = PRMController(10, allObs, current, destination)
+    prm = PRMController(1000, allObs, current, destination)
     prm.runPRM()
 
     plt.show()
