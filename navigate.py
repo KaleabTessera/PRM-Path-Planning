@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.patches import Rectangle
 import numpy as np
+from sklearn.neighbors import NearestNeighbors
 
 
 class Navigate:
@@ -21,12 +22,33 @@ class Obstacle:
         print(self.topLeft, self.topRight, self.bottomLeft, self.bottomRight)
 
     def calcFullCord(self):
-        self.bottomLeft = [self.topLeft[0], self.bottomRight[1]]
-        self.topRight = [self.bottomRight[0], self.topLeft[1]]
-        self.width = self.topRight[0] - self.topLeft[0]
-        self.height = self.topRight[1] - self.bottomRight[1]
+        otherP1 = [self.topLeft[0], self.bottomRight[1]]
+        otherP2 = [self.bottomRight[0], self.topLeft[1]]
+
+        points = [self.topLeft, otherP1,
+                  otherP2, self.bottomRight]
+
+        # Finding correct coords and what part of rectangle they represent - we can't always assume we receive the top left and bottomRight
+        x = [item[0] for item in points]
+        y = [item[1] for item in points]
+
+        minX = np.min(x)
+        minY = np.min(y)
+
+        maxX = np.max(x)
+        maxY = np.max(y)
+
+        self.topRight = np.array([maxX, maxY])
+        self.bottomLeft = np.array([minX, minY])
+
+        self.topLeft = np.array([minX, maxY])
+        self.bottomRight = np.array([maxX, minY])
+
         self.allCords = [self.topLeft, self.topRight,
                          self.bottomLeft, self.bottomRight]
+
+        self.width = self.topRight[0] - self.topLeft[0]
+        self.height = self.topRight[1] - self.bottomRight[1]
 
 
 def isWall(obs):
@@ -74,42 +96,55 @@ class PRMController:
     def runPRM(self):
         self.genCoords()
         self.checkIfCollisonFree()
+        self.findNearestNeighbour()
+
+    def findNearestNeighbour(self):
+        X = self.collisionFreePoints
+        knn = NearestNeighbors(n_neighbors=5)
+        knn.fit(X)
+        distances, indices = knn.kneighbors(X)
+        print(indices[0])
+        for i, p in enumerate(X):
+            for i in X[indices[i]]:
+                # self.checkPointCollision()
+                plt.plot([p[0], i[0]], [p[1], i[1]])
 
     def genCoords(self):
         self.coordsList = np.random.randint(
             100, size=(self.numOfCoords, 2))
-        # x = [item[0] for item in self.coordsList]
-        # y = [item[1] for item in self.coordsList]
-        # plt.scatter(x, y, c="black", s=1)
-        # plt.show()
 
-    def plotPoints(self,points):
+    def plotPoints(self, points):
         x = [item[0] for item in points]
         y = [item[1] for item in points]
         plt.scatter(x, y, c="black", s=1)
 
-    def checkCollision(self,obs,point):
+    def checkCollision(self, obs, point):
         p_x = point[0]
         p_y = point[1]
-        #Check collision
-        if(obs.bottomLeft[0] <= p_x <= obs.bottomRight[0] and obs.topLeft[1] <= p_y <= obs.bottomLeft[1]):
+        if(obs.bottomLeft[0] <= p_x <= obs.bottomRight[0] and obs.bottomLeft[1] <= p_y <= obs.topLeft[1]):
             return True
+        else:
+            # print("No collision", point)
+            return False
+
+    def checkPointCollision(self, point):
+        for obs in self.allObs:
+            collision = self.checkCollision(obs, point)
+            if(collision):
+                return True
         return False
 
     def checkIfCollisonFree(self):
-
+        collision = False
         self.collisionFreePoints = np.array([])
         for point in self.coordsList:
-            for obs in self.allObs:
-                collision = self.checkCollision(obs,point)
-                if(collision):
-                    continue
-            if(self.collisionFreePoints.size == 0):
-                self.collisionFreePoints = point
-            else:
-                self.collisionFreePoints = np.vstack([self.collisionFreePoints,point])
-        # print(self.collisionFreePoints)
-        # print(self.collisionFreePoints.shape)
+            collision = self.checkPointCollision(point)
+            if(not collision):
+                if(self.collisionFreePoints.size == 0):
+                    self.collisionFreePoints = point
+                else:
+                    self.collisionFreePoints = np.vstack(
+                        [self.collisionFreePoints, point])
         self.plotPoints(self.collisionFreePoints)
 
 
@@ -135,7 +170,7 @@ def main(args):
 
     drawMap(allObs, current, destination)
 
-    prm = PRMController(100, allObs, current, destination)
+    prm = PRMController(10, allObs, current, destination)
     prm.runPRM()
 
     plt.show()
