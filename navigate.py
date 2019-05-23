@@ -68,7 +68,6 @@ def drawMap(obs, curr, dest):
         if(isWall(ob)):
             x = [item[0] for item in ob.allCords]
             y = [item[1] for item in ob.allCords]
-            # if(len(np.unique(x)) < 2 or len(np.unique(y)) < 2):
             plt.scatter(x, y, c="red")
             plt.plot(x, y)
         else:
@@ -77,13 +76,8 @@ def drawMap(obs, curr, dest):
 
     plt.scatter(curr[0], curr[1], c='green')
     plt.scatter(dest[0], dest[1], c='green')
-    # fig = plt.figure()
-    # plt.show()
     fig.canvas.draw()
     data = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
-    print(data.shape)
-    # data = np.fromstring(fig, dtype=np.uint8, sep='')
-    # plt.show()
 
 
 class PRMController:
@@ -108,7 +102,6 @@ class PRMController:
                 wall = shapely.geometry.LineString(
                     uniqueCords)
                 if(line.intersection(wall)):
-                    print(wall, line, line.intersection(wall))
                     collision = True
             else:
                 obstacleShape = shapely.geometry.Polygon(
@@ -125,17 +118,14 @@ class PRMController:
         distances, indices = knn.kneighbors(X)
         print(indices[0])
         for i, p in enumerate(X):
-            # print(p, indices[i])
             for i in X[indices[i]]:
-                start_line = [p[0], i[0]]
-                end_line = [p[1], i[1]]
+                start_line = p
+                end_line = i
                 if(not self.checkPointCollision(start_line) and not self.checkPointCollision(end_line)):
-                    # try:
                     if(not self.checkLineCollision(start_line, end_line)):
-                            # self.checkLineCollision(line)
-                        plt.plot(start_line, end_line)
-                    # except:
-                        # print(start_line, end_line, Exception)
+                        x = [p[0], i[0]]
+                        y = [p[1], i[1]]
+                        plt.plot(x, y)
 
     def genCoords(self):
         self.coordsList = np.random.randint(
@@ -152,7 +142,6 @@ class PRMController:
         if(obs.bottomLeft[0] <= p_x <= obs.bottomRight[0] and obs.bottomLeft[1] <= p_y <= obs.topLeft[1]):
             return True
         else:
-            # print("No collision", point)
             return False
 
     def checkPointCollision(self, point):
