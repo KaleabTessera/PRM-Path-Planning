@@ -1,3 +1,4 @@
+from collections import defaultdict
 import sys
 import math
 import matplotlib.pyplot as plt
@@ -6,6 +7,7 @@ from matplotlib.patches import Rectangle
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
 import shapely.geometry
+import argparse
 
 
 class Navigate:
@@ -52,6 +54,22 @@ class Obstacle:
         self.height = self.topRight[1] - self.bottomRight[1]
 
 
+class Graph:
+    def __init__(self):
+        self.nodes = set()
+        self.edges = defaultdict(list)
+        self.distances = {}
+
+    def add_node(self, value):
+        self.nodes.add(value)
+
+    def add_edge(self, from_node, to_node, distance):
+        self.edges[from_node].append(to_node)
+        self.edges[to_node].append(from_node)
+        self.distances[(from_node, to_node)] = distance
+        # self.distances[(to_node, from_node)] = distance
+
+
 def isWall(obs):
     x = [item[0] for item in obs.allCords]
     y = [item[1] for item in obs.allCords]
@@ -74,10 +92,9 @@ def drawMap(obs, curr, dest):
             currentAxis.add_patch(Rectangle(
                 (ob.bottomLeft[0], ob.bottomLeft[1]), ob.width, ob.height, alpha=0.4))
 
-    plt.scatter(curr[0], curr[1], c='green')
-    plt.scatter(dest[0], dest[1], c='green')
+    plt.scatter(curr[0], curr[1], s=200, c='green')
+    plt.scatter(dest[0], dest[1], s=200, c='green')
     fig.canvas.draw()
-    data = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
 
 
 class PRMController:
@@ -85,13 +102,57 @@ class PRMController:
         self.numOfCoords = numOfRandomCoordinates
         self.coordsList = np.array([])
         self.allObs = allObs
-        self.current = current
-        self.destination = destination
+        self.current = np.array(current)
+        self.destination = np.array(destination)
+        self.graph = Graph()
 
     def runPRM(self):
         self.genCoords()
         self.checkIfCollisonFree()
         self.findNearestNeighbour()
+        self.startNode = self.findNodeIndex(self.current)
+        self.endNode = self.findNodeIndex(self.destination)
+        self.findShortestPath(self.graph, self.startNode)
+        for key, value in self.graph.distances.items():
+            if(key[0] == self.endNode):
+                print(key)
+        # print(self.graph.distances.keys.value)
+
+    # Dijkstra
+
+    def findShortestPath(self, graph, initial):
+        visited = {initial: 0}
+        path = {}
+
+        nodes = set(graph.nodes)
+
+        while nodes:
+            min_node = None
+            for node in nodes:
+                if node in visited:
+                    if min_node is None:
+                        min_node = node
+                    elif visited[node] < visited[min_node]:
+                        min_node = node
+
+            if min_node is None:
+                break
+
+            nodes.remove(min_node)
+            current_weight = visited[min_node]
+
+            for edge in graph.edges[min_node]:
+                try:
+                    weight = current_weight + graph.distances[(min_node, edge)]
+                except:
+                    weight = current_weight + math.inf
+                if edge not in visited or weight < visited[edge]:
+                    visited[edge] = weight
+                    path[edge] = min_node
+                    if(edge == self.endNode):
+                        print("HMMM", self.collisionFreePaths[min_node])
+
+        return visited, path
 
     def checkLineCollision(self, start_line, end_line):
         collision = False
@@ -111,25 +172,47 @@ class PRMController:
                 return True
         return False
 
+    def findNodeIndex(self, p):
+        return np.where(self.collisionFreePoints == p)[0][1]
+
     def findNearestNeighbour(self):
         X = self.collisionFreePoints
         knn = NearestNeighbors(n_neighbors=5)
         knn.fit(X)
         distances, indices = knn.kneighbors(X)
-        print(indices[0])
+        self.collisionFreePaths = np.empty((1, 2), int)
+        # print(indices[0])
+
         for i, p in enumerate(X):
-            for i in X[indices[i]]:
+            # Ignoring nearest neighbour - nearest neighbour is the point itself
+            for j, neighbour in enumerate(X[indices[i][1:]]):
                 start_line = p
-                end_line = i
+                end_line = neighbour
                 if(not self.checkPointCollision(start_line) and not self.checkPointCollision(end_line)):
                     if(not self.checkLineCollision(start_line, end_line)):
-                        x = [p[0], i[0]]
-                        y = [p[1], i[1]]
+                        self.collisionFreePaths = np.concatenate(
+                            (self.collisionFreePaths, p.reshape(1, 2), neighbour.reshape(1, 2)), axis=0)
+                        self.graph.add_node(self.findNodeIndex(p))
+                        self.graph.add_edge(self.findNodeIndex(
+                            p), self.findNodeIndex(neighbour), distances[i, j+1])
+                        x = [p[0], neighbour[0]]
+                        y = [p[1], neighbour[1]]
                         plt.plot(x, y)
+                        # print(f'found neigh: {p} and {neighbour}')
+                        # break
+        # return collisionFreePaths
 
     def genCoords(self):
+
         self.coordsList = np.random.randint(
             100, size=(self.numOfCoords, 2))
+        # Adding begin and end points
+        self.current = self.current.reshape(1, 2)
+        self.destination = self.destination.reshape(1, 2)
+        self.coordsList = np.concatenate(
+            (self.coordsList, self.current, self.destination), axis=0)
+        # print(self.coordsList)
+        # self.coordsList.append()
 
     def plotPoints(self, points):
         x = [item[0] for item in points]
@@ -166,6 +249,14 @@ class PRMController:
 
 
 def main(args):
+    graph = Graph()
+    parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
+    parser.add_argument('--numSamples', type=int, default=100, metavar='N',
+                        help='Number of sampled points')
+    args = parser.parse_args()
+
+    numSamples = args.numSamples
+
     env = open("environment.txt", "r")
     l1 = env.readline().split(";")
 
@@ -187,7 +278,7 @@ def main(args):
 
     drawMap(allObs, current, destination)
 
-    prm = PRMController(1000, allObs, current, destination)
+    prm = PRMController(numSamples, allObs, current, destination)
     prm.runPRM()
 
     plt.show()
