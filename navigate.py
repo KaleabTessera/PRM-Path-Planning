@@ -114,8 +114,9 @@ class PRMController:
         self.endNode = self.findNodeIndex(self.destination)
         self.findShortestPath(self.graph, self.startNode)
         for key, value in self.graph.distances.items():
-            if(key[0] == self.endNode):
-                print(key)
+            if(key[1] == self.endNode):
+                print(key, self.collisionFreePoints[
+                    key[0]], self.collisionFreePoints[key[1]], value)
         # print(self.graph.distances.keys.value)
 
     # Dijkstra
@@ -150,7 +151,7 @@ class PRMController:
                     visited[edge] = weight
                     path[edge] = min_node
                     if(edge == self.endNode):
-                        print("HMMM", self.collisionFreePaths[min_node])
+                        print("HMMM", self.collisionFreePoints[min_node])
 
         return visited, path
 
