@@ -20,3 +20,9 @@ python main.py --numSamples [number]
    - Retain collision free links as local paths.
 4. Search for shortest path from start to end node using an algoruthm. In this case we are using Dijksta's shortest path algorithm.
 
+## PRM vs RRT (Randomly Expanding Trees)
+PRM was choosen since it is probabilistically complete and in a small map like the one given in this problem, sampling is time efficient.
+
+## Example Path
+### PRM with 1000 samples
+![PRM_1000](1000_samples.png)
