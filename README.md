@@ -31,7 +31,8 @@ PRM was choosen since it is probabilistically complete and in a small map like t
 "You are given as input the current and target coordinates of a robot, as well as the top left and bottom right points of rectangular obstacles."
 
 ## How to Specify Obstacles - Use environment.txt
-```starting point;target point
+```
+starting point;target point
 list of obstacle coordinates
 -1
 ```
