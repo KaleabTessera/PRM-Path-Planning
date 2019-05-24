@@ -3,7 +3,7 @@ Probabilistic Roadmaps is a path planning algorithm used in Robotics.
 
 ## How to run
 ```
-pip install -r requirement.txt
+pip install -r requirements.txt
 python main.py
 ```
 
