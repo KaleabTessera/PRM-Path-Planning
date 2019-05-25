@@ -6,7 +6,7 @@ from classes import PRMController, Obstacle, Utils
 
 
 def main(args):
-    np.random.seed(0)
+
     parser = argparse.ArgumentParser(description='PRM Path Planning Algorithm')
     parser.add_argument('--numSamples', type=int, default=1000, metavar='N',
                         help='Number of sampled points')
@@ -37,7 +37,9 @@ def main(args):
     utils.drawMap(allObs, current, destination)
 
     prm = PRMController(numSamples, allObs, current, destination)
-    prm.runPRM()
+    # Initial random seed to try
+    initialRandomSeed = 0
+    prm.runPRM(initialRandomSeed)
 
 
 if __name__ == '__main__':

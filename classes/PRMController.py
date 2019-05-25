@@ -22,20 +22,31 @@ class PRMController:
         self.destination = np.array(destination)
         self.graph = Graph()
         self.utils = Utils()
+        self.solutionFound = False
 
-    def runPRM(self):
-        # Generate n random samples called milestones
-        self.genCoords()
+    def runPRM(self, initialRandomSeed):
+        seed = initialRandomSeed
+        # Keep resampling if no solution found
+        while(not self.solutionFound):
+            print("Trying with seed random seed {}".format(seed))
+            np.random.seed(seed)
 
-        # Check if milestones are collision free
-        self.checkIfCollisonFree()
+            # Generate n random samples called milestones
+            self.genCoords()
 
-        # Link each milestone to k nearest neighbours.
-        # Retain collision free links as local paths.
-        self.findNearestNeighbour()
+            # Check if milestones are collision free
+            self.checkIfCollisonFree()
 
-        # Search for shortest path from start to end node - Using Dijksta's shortest path alg
-        self.shortestPath()
+            # Link each milestone to k nearest neighbours.
+            # Retain collision free links as local paths.
+            self.findNearestNeighbour()
+
+            # Search for shortest path from start to end node - Using Dijksta's shortest path alg
+            self.shortestPath()
+
+            seed = np.random.randint(1, 100000)
+            self.coordsList = np.array([])
+            self.graph = Graph()
 
         plt.show()
 
@@ -93,6 +104,11 @@ class PRMController:
         dist, prev = dijkstra(self.graph, self.startNode)
 
         pathToEnd = to_array(prev, self.endNode)
+
+        if(len(pathToEnd) > 1):
+            self.solutionFound = True
+        else:
+            return
 
         # Plotting shorest path
         pointsToDisplay = [(self.findPointsFromNode(path))
