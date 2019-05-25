@@ -24,7 +24,7 @@ class PRMController:
         self.utils = Utils()
         self.solutionFound = False
 
-    def runPRM(self, initialRandomSeed):
+    def runPRM(self, initialRandomSeed, saveImage=True):
         seed = initialRandomSeed
         # Keep resampling if no solution found
         while(not self.solutionFound):
@@ -48,6 +48,8 @@ class PRMController:
             self.coordsList = np.array([])
             self.graph = Graph()
 
+        if(saveImage):
+            plt.savefig("{}_samples.png".format(self.numOfCoords))
         plt.show()
 
     def genCoords(self, maxSizeOfMap=100):
