@@ -28,7 +28,7 @@ class PRMController:
         seed = initialRandomSeed
         # Keep resampling if no solution found
         while(not self.solutionFound):
-            print("Trying with seed random seed {}".format(seed))
+            print("Trying with random seed {}".format(seed))
             np.random.seed(seed)
 
             # Generate n random samples called milestones
