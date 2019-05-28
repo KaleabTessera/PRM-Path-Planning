@@ -12,6 +12,13 @@ You can also specify number of samples:
 python main.py --numSamples [number]
 ```
 
+## Example Path
+### PRM with 1000 sample points.
+![PRM_1000](1000_samples.png)
+
+### PRM with 5000 sample points.
+![PRM_5000](5000_samples.png)
+
 ## Steps of algorithm
 1. Generate n random samples called milestones.
 2. Check if milestones are collision free.
@@ -22,13 +29,6 @@ python main.py --numSamples [number]
 
 ## PRM vs RRT (Randomly Expanding Trees)
 PRM was choosen since it is probabilistically complete and in a small map like the one given in this problem, sampling is time efficient.
-
-## Example Path
-### PRM with 1000 sample points.
-![PRM_1000](1000_samples.png)
-
-### PRM with 5000 sample points.
-![PRM_5000](5000_samples.png)
 
 ## Problem
 "You are given as input the current and target coordinates of a robot, as well as the top left and bottom right points of rectangular obstacles."
