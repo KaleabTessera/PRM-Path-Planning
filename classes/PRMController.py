@@ -1,6 +1,4 @@
 from collections import defaultdict
-import sys
-import math
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.patches import Rectangle
@@ -11,56 +9,63 @@ import argparse
 
 from .Dijkstra import Graph, dijkstra, to_array
 from .Utils import Utils
-
+import time
 
 class PRMController:
-    def __init__(self, numOfRandomCoordinates, allObs, current, destination):
+    def __init__(self, numOfRandomCoordinates, allObs, current, destinations):
         self.numOfCoords = numOfRandomCoordinates
         self.coordsList = np.array([])
         self.allObs = allObs
         self.current = np.array(current)
-        self.destination = np.array(destination)
+        self.destinations = np.array(destinations)
         self.graph = Graph()
         self.utils = Utils()
         self.solutionFound = False
-
-    def runPRM(self, initialRandomSeed, saveImage=True):
+        self.maxSizeOfMap = 100
+    def runPRM(self, initialRandomSeed,saveImage=True):
         seed = initialRandomSeed
         # Keep resampling if no solution found
+        start = time.time()
         while(not self.solutionFound):
             print("Trying with random seed {}".format(seed))
             np.random.seed(seed)
+            
+            self.coordsList = np.random.randint(self.maxSizeOfMap, size=(self.numOfCoords, 2))
+            for i in range(0,len(self.destinations)):
+                if i != 0:
+                    self.current = self.destinations[i-1,:]
+                self.destination = self.destinations[i,:]
+                # Generate n random samples called milestones
+                self.genCoords()
+                
+                # Check if milestones are collision free
+                self.checkIfCollisonFree()
 
-            # Generate n random samples called milestones
-            self.genCoords()
+                # Link each milestone to k nearest neighbours.
+                # Retain collision free links as local paths.
+                self.findNearestNeighbour()
 
-            # Check if milestones are collision free
-            self.checkIfCollisonFree()
-
-            # Link each milestone to k nearest neighbours.
-            # Retain collision free links as local paths.
-            self.findNearestNeighbour()
-
-            # Search for shortest path from start to end node - Using Dijksta's shortest path alg
-            self.shortestPath()
+                # Search for shortest path from start to end node - Using Dijksta's shortest path alg
+                self.shortestPath()
+                #raise NotImplementedError
 
             seed = np.random.randint(1, 100000)
             self.coordsList = np.array([])
             self.graph = Graph()
 
-        if(saveImage):
-            plt.savefig("{}_samples.png".format(self.numOfCoords))
-        plt.show()
+            if(saveImage):
+                plt.savefig("{}_samples.png".format(self.numOfCoords))
+            plt.show()
+            end = time.time()
+            print(f"{end - start:.5f} sec")
 
-    def genCoords(self, maxSizeOfMap=100):
-        self.coordsList = np.random.randint(
-            maxSizeOfMap, size=(self.numOfCoords, 2))
+    def genCoords(self):
         # Adding begin and end points
         self.current = self.current.reshape(1, 2)
-        self.destination = self.destination.reshape(1, 2)
+        self.destination = self.destination.reshape(-1, 2)
         self.coordsList = np.concatenate(
             (self.coordsList, self.current, self.destination), axis=0)
-
+        #self.coordsList2 = np.concatenate(self.coordsList,self.destinations[0],self.destinations[1],axis = 0)
     def checkIfCollisonFree(self):
         collision = False
         self.collisionFreePoints = np.array([])
@@ -74,7 +79,7 @@ class PRMController:
                         [self.collisionFreePoints, point])
         self.plotPoints(self.collisionFreePoints)
 
-    def findNearestNeighbour(self, k=5):
+    def findNearestNeighbour(self, k=8):
         X = self.collisionFreePoints
         knn = NearestNeighbors(n_neighbors=k)
         knn.fit(X)

@@ -3,7 +3,7 @@ import sys
 import numpy as np
 import argparse
 from classes import PRMController, Obstacle, Utils
-
+import time
 
 def main(args):
 
@@ -15,14 +15,17 @@ def main(args):
     numSamples = args.numSamples
 
     env = open("environment.txt", "r")
+    # l1 : Current and Destination
     l1 = env.readline().split(";")
 
     current = list(map(int, l1[0].split(",")))
-    destination = list(map(int, l1[1].split(",")))
+    destinations = np.array(list(map(int, l1[1].split(",")))).reshape(-1,2)
+    destinations = np.ndarray.tolist(destinations)
 
-    print("Current: {} Destination: {}".format(current, destination))
+    print("Current: {} Destinations: {}".format(current, destinations))
 
     print("****Obstacles****")
+    # 모든 장애물들
     allObs = []
     for l in env:
         if(";" in l):
@@ -34,13 +37,14 @@ def main(args):
             allObs.append(obs)
 
     utils = Utils()
-    utils.drawMap(allObs, current, destination)
+    utils.drawMap(allObs, current, destinations)
 
-    prm = PRMController(numSamples, allObs, current, destination)
+    prm = PRMController(numSamples, allObs, current, destinations)
     # Initial random seed to try
-    initialRandomSeed = 0
+    initialRandomSeed = 32
     prm.runPRM(initialRandomSeed)
 
 
 if __name__ == '__main__':
+
     main(sys.argv)
