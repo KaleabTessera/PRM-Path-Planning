@@ -29,7 +29,7 @@ class PRMController:
         while(not self.solutionFound):
             print("Trying with random seed {}".format(seed))
             np.random.seed(seed)
-            
+            # self.coordList 를 scipy Halton distribution?
             self.coordsList = np.random.randint(self.maxSizeOfMap, size=(self.numOfCoords, 2))
             for i in range(0,len(self.destinations)):
                 if i != 0:
@@ -37,7 +37,7 @@ class PRMController:
                 self.destination = self.destinations[i,:]
                 # Generate n random samples called milestones
                 self.genCoords()
-                
+                d
                 # Check if milestones are collision free
                 self.checkIfCollisonFree()
 
