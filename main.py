@@ -41,7 +41,7 @@ def main(args):
 
     prm = PRMController(numSamples, allObs, current, destinations)
     # Initial random seed to try
-    initialRandomSeed = 32
+    initialRandomSeed = 27
     prm.runPRM(initialRandomSeed)
 
 
