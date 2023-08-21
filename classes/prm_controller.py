@@ -1,14 +1,12 @@
 from collections import defaultdict
 import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-from matplotlib.patches import Rectangle
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
 import shapely.geometry
 import argparse
 from scipy.stats import qmc
-from .Dijkstra import Graph, dijkstra, to_array
-from .Utils import Utils
+from .dijkstra import Graph, dijkstra, to_array
+from .utils import utils
 import time
 
 class PRMController:
@@ -19,7 +17,7 @@ class PRMController:
         self.current = np.array(current)
         self.destinations = np.array(destinations)
         self.graph = Graph()
-        self.utils = Utils()
+        self.utils = utils()
         self.solutionFound = False
         self.maxSizeOfMap = 100
     def runPRM(self, initialRandomSeed,saveImage=True):

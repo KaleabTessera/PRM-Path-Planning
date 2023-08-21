@@ -1,3 +1,3 @@
-from .PRMController import *
-from .Obstacle import *
-from .Utils import *
+from .prm_controller import *
+from .obstacle import *
+from .utils import *

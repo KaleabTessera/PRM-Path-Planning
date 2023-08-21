@@ -2,7 +2,7 @@
 import sys
 import numpy as np
 import argparse
-from classes import PRMController, Obstacle, Utils
+from classes import prm_controller, Obstacle, Utils
 import time
 
 def main(args):
@@ -39,7 +39,7 @@ def main(args):
     utils = Utils()
     utils.drawMap(allObs, current, destinations)
 
-    prm = PRMController(numSamples, allObs, current, destinations)
+    prm = prm_controller(numSamples, allObs, current, destinations)
     # Initial random seed to try
     initialRandomSeed = 27
     prm.runPRM(initialRandomSeed)
