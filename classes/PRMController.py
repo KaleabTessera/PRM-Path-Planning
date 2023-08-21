@@ -29,7 +29,7 @@ class PRMController:
         while(not self.solutionFound):
             print("Trying with random seed {}".format(seed))
             np.random.seed(seed)
-            # self.coordList 를 scipy Halton distribution?
+            # Halton sequence :  quasi-random . 
             sampler = qmc.Halton(d=2,scramble=False,seed=seed)
             sample = sampler.random(n=self.numOfCoords)
             self.coordsList = sample * self.maxSizeOfMap
