@@ -46,5 +46,6 @@ def main(args):
 
 
 if __name__ == '__main__':
-
+    # prm의 결과가 이제 총 경로의 길이가 나오도록 코드 수정.
     main(sys.argv)
+    
