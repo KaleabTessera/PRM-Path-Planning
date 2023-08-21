@@ -8,7 +8,7 @@ import time
 def main(args):
 
     parser = argparse.ArgumentParser(description='PRM Path Planning Algorithm')
-    parser.add_argument('--numSamples', type=int, default=1000, metavar='N',
+    parser.add_argument('--numSamples', type=float, default=1000, metavar='N',
                         help='Number of sampled points')
     args = parser.parse_args()
 
@@ -18,8 +18,8 @@ def main(args):
     # l1 : Current and Destination
     l1 = env.readline().split(";")
 
-    current = list(map(int, l1[0].split(",")))
-    destinations = np.array(list(map(int, l1[1].split(",")))).reshape(-1,2)
+    current = list(map(float, l1[0].split(",")))
+    destinations = np.array(list(map(float, l1[1].split(",")))).reshape(-1,2)
     destinations = np.ndarray.tolist(destinations)
 
     print("Current: {} Destinations: {}".format(current, destinations))
