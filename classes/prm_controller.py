@@ -6,177 +6,162 @@ import shapely.geometry
 import argparse
 from scipy.stats import qmc
 from .dijkstra import Graph, dijkstra, to_array
-from .utils import utils
+from .utils import Utils
 import time
 
-class PRMController:
-    def __init__(self, numOfRandomCoordinates, allObs, current, destinations):
-        self.numOfCoords = numOfRandomCoordinates
-        self.coordsList = np.array([])
-        self.allObs = allObs
+class Prmcontroller:
+    def __init__(self, num_of_random_coordinates, all_obs, current, destinations):
+        self.num_of_coords = num_of_random_coordinates
+        self.coords_list = np.array([])
+        self.all_obs = all_obs
         self.current = np.array(current)
         self.destinations = np.array(destinations)
         self.graph = Graph()
-        self.utils = utils()
-        self.solutionFound = False
-        self.maxSizeOfMap = 100
-    def runPRM(self, initialRandomSeed,saveImage=True):
-        seed = initialRandomSeed
-        # Keep resampling if no solution found
+        self.utils = Utils()
+        self.solution_found = False
+        self.max_size_of_map = 100
+
+    def run_prm(self, initial_random_seed, save_image=True):
+        seed = initial_random_seed
         start = time.time()
-        while(not self.solutionFound):
+        while not self.solution_found:
             print("Trying with random seed {}".format(seed))
             np.random.seed(seed)
-            # Halton sequence :  quasi-random . 
-            sampler = qmc.Halton(d=2,scramble=False,seed=seed)
-            sample = sampler.random(n=self.numOfCoords)
-            self.coordsList = sample * self.maxSizeOfMap
-            #self.coordsList = np.random.randint(self.maxSizeOfMap, size=(self.numOfCoords, 2))
-            for i in range(0,len(self.destinations)):
+            sampler = qmc.Halton(d=2, scramble=False, seed=seed)
+            sample = sampler.random(n=self.num_of_coords)
+            self.coords_list = sample * self.max_size_of_map
+            for i in range(0, len(self.destinations)):
                 if i != 0:
-                    self.current = self.destinations[i-1,:]
-                self.destination = self.destinations[i,:]
-                # Generate n random samples called milestones
-                self.genCoords()
-                # Check if milestones are collision free
-                self.checkIfCollisonFree()
-
-                # Link each milestone to k nearest neighbours.
-                # Retain collision free links as local paths.
-                self.findNearestNeighbour()
-
-                # Search for shortest path from start to end node - Using Dijksta's shortest path alg
-                self.shortestPath()
-                #raise NotImplementedError
+                    self.current = self.destinations[i - 1, :]
+                self.destination = self.destinations[i, :]
+                self.generate_coords()
+                self.check_if_collision_free()
+                self.find_nearest_neighbour()
+                self.shortest_path()
 
             seed = np.random.randint(1, 100000)
-            self.coordsList = np.array([])
+            self.coords_list = np.array([])
             self.graph = Graph()
 
-            if(saveImage):
-                plt.savefig("{}_samples.png".format(self.numOfCoords))
+            if save_image:
+                plt.savefig("{}_samples.png".format(self.num_of_coords))
             plt.show()
             end = time.time()
             print(f"{end - start:.5f} sec")
 
-    def genCoords(self):
-        # Adding begin and end points
+    def generate_coords(self):
         self.current = self.current.reshape(1, 2)
         self.destination = self.destination.reshape(-1, 2)
-        self.coordsList = np.concatenate(
-            (self.coordsList, self.current, self.destination), axis=0)
-        #self.coordsList2 = np.concatenate(self.coordsList,self.destinations[0],self.destinations[1],axis = 0)
-    def checkIfCollisonFree(self):
-        collision = False
-        self.collisionFreePoints = np.array([])
-        for point in self.coordsList:
-            collision = self.checkPointCollision(point)
-            if(not collision):
-                if(self.collisionFreePoints.size == 0):
-                    self.collisionFreePoints = point
-                else:
-                    self.collisionFreePoints = np.vstack(
-                        [self.collisionFreePoints, point])
-        self.plotPoints(self.collisionFreePoints)
+        self.coords_list = np.concatenate(
+            (self.coords_list, self.current, self.destination), axis=0)
 
-    def findNearestNeighbour(self, k=8):
-        X = self.collisionFreePoints
+    def check_if_collision_free(self):
+        collision = False
+        self.collision_free_points = np.array([])
+        for point in self.coords_list:
+            collision = self.check_point_collision(point)
+            if not collision:
+                if self.collision_free_points.size == 0:
+                    self.collision_free_points = point
+                else:
+                    self.collision_free_points = np.vstack(
+                        [self.collision_free_points, point])
+        self.plot_points(self.collision_free_points)
+
+    def find_nearest_neighbour(self, k=8):
+        X = self.collision_free_points
         knn = NearestNeighbors(n_neighbors=k)
         knn.fit(X)
         distances, indices = knn.kneighbors(X)
-        self.collisionFreePaths = np.empty((1, 2), int)
+        self.collision_free_paths = np.empty((1, 2), int)
 
         for i, p in enumerate(X):
-            # Ignoring nearest neighbour - nearest neighbour is the point itself
             for j, neighbour in enumerate(X[indices[i][1:]]):
                 start_line = p
                 end_line = neighbour
-                if(not self.checkPointCollision(start_line) and not self.checkPointCollision(end_line)):
-                    if(not self.checkLineCollision(start_line, end_line)):
-                        self.collisionFreePaths = np.concatenate(
-                            (self.collisionFreePaths, p.reshape(1, 2), neighbour.reshape(1, 2)), axis=0)
+                if not self.check_point_collision(start_line) and not self.check_point_collision(end_line):
+                    if not self.check_line_collision(start_line, end_line):
+                        self.collision_free_paths = np.concatenate(
+                            (self.collision_free_paths, p.reshape(1, 2), neighbour.reshape(1, 2)), axis=0)
 
-                        a = str(self.findNodeIndex(p))
-                        b = str(self.findNodeIndex(neighbour))
+                        a = str(self.find_node_index(p))
+                        b = str(self.find_node_index(neighbour))
                         self.graph.add_node(a)
-                        self.graph.add_edge(a, b, distances[i, j+1])
+                        self.graph.add_edge(a, b, distances[i, j + 1])
                         x = [p[0], neighbour[0]]
                         y = [p[1], neighbour[1]]
                         plt.plot(x, y)
 
-    def shortestPath(self):
-        self.startNode = str(self.findNodeIndex(self.current))
-        self.endNode = str(self.findNodeIndex(self.destination))
+    def shortest_path(self):
+        self.start_node = str(self.find_node_index(self.current))
+        self.end_node = str(self.find_node_index(self.destination))
 
-        dist, prev = dijkstra(self.graph, self.startNode)
+        dist, prev = dijkstra(self.graph, self.start_node)
+        path_to_end = to_array(prev, self.end_node)
 
-        pathToEnd = to_array(prev, self.endNode)
-
-        if(len(pathToEnd) > 1):
-            self.solutionFound = True
+        if len(path_to_end) > 1:
+            self.solution_found = True
         else:
             return
 
-        # Plotting shorest path
-        pointsToDisplay = [(self.findPointsFromNode(path))
-                           for path in pathToEnd]
+        points_to_display = [(self.find_points_from_node(path))
+                             for path in path_to_end]
 
-        x = [int(item[0]) for item in pointsToDisplay]
-        y = [int(item[1]) for item in pointsToDisplay]
+        x = [int(item[0]) for item in points_to_display]
+        y = [int(item[1]) for item in points_to_display]
         plt.plot(x, y, c="blue", linewidth=3.5)
 
-        pointsToEnd = [str(self.findPointsFromNode(path))
-                       for path in pathToEnd]
+        points_to_end = [str(self.find_points_from_node(path))
+                          for path in path_to_end]
         print("****Output****")
-
         print("The quickest path from {} to {} is: \n {} \n with a distance of {}".format(
-            self.collisionFreePoints[int(self.startNode)],
-            self.collisionFreePoints[int(self.endNode)],
-            " \n ".join(pointsToEnd),
-            str(dist[self.endNode])
-        )
-        )
+            self.collision_free_points[int(self.start_node)],
+            self.collision_free_points[int(self.end_node)],
+            " \n ".join(points_to_end),
+            str(dist[self.end_node])
+        ))
 
-    def checkLineCollision(self, start_line, end_line):
+    def check_line_collision(self, start_line, end_line):
         collision = False
         line = shapely.geometry.LineString([start_line, end_line])
-        for obs in self.allObs:
-            if(self.utils.isWall(obs)):
-                uniqueCords = np.unique(obs.allCords, axis=0)
+        for obs in self.all_obs:
+            if self.utils.is_wall(obs):
+                unique_coords = np.unique(obs.all_coordinates, axis=0)
                 wall = shapely.geometry.LineString(
-                    uniqueCords)
-                if(line.intersection(wall)):
+                    unique_coords)
+                if line.intersection(wall):
                     collision = True
             else:
-                obstacleShape = shapely.geometry.Polygon(
-                    obs.allCords)
-                collision = line.intersects(obstacleShape)
-            if(collision):
+                obstacle_shape = shapely.geometry.Polygon(obs.all_coordinates)
+                collision = line.intersects(obstacle_shape)
+            if collision:
                 return True
         return False
 
-    def findNodeIndex(self, p):
-        return np.where((self.collisionFreePoints == p).all(axis=1))[0][0]
+    def find_node_index(self, p):
+        return np.where((self.collision_free_points == p).all(axis=1))[0][0]
 
-    def findPointsFromNode(self, n):
-        return self.collisionFreePoints[int(n)]
+    def find_points_from_node(self, n):
+        return self.collision_free_points[int(n)]
 
-    def plotPoints(self, points):
+    def plot_points(self, points):
         x = [item[0] for item in points]
         y = [item[1] for item in points]
         plt.scatter(x, y, c="black", s=1)
 
-    def checkCollision(self, obs, point):
+    def check_collision(self, obs, point):
         p_x = point[0]
         p_y = point[1]
-        if(obs.bottomLeft[0] <= p_x <= obs.bottomRight[0] and obs.bottomLeft[1] <= p_y <= obs.topLeft[1]):
+        if obs.bottom_left[0] <= p_x <= obs.bottom_right[0] and obs.bottom_left[1] <= p_y <= obs.top_left[1]:
             return True
         else:
             return False
 
-    def checkPointCollision(self, point):
-        for obs in self.allObs:
-            collision = self.checkCollision(obs, point)
-            if(collision):
+    def check_point_collision(self, point):
+        for obs in self.all_obs:
+            collision = self.check_collision(obs, point)
+            if collision:
                 return True
+        return False
+
         return False
