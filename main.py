@@ -2,45 +2,51 @@
 import sys
 import numpy as np
 import argparse
-from classes import PRMController, Obstacle, Utils
-
+from classes import Prmcontroller, Obstacle, Utils
+import time
 
 def main(args):
 
     parser = argparse.ArgumentParser(description='PRM Path Planning Algorithm')
-    parser.add_argument('--numSamples', type=int, default=1000, metavar='N',
+    parser.add_argument('--num_samples', type=float, default=1000, metavar='N',
                         help='Number of sampled points')
     args = parser.parse_args()
 
-    numSamples = args.numSamples
-
-    env = open("environment.txt", "r")
+    num_samples = args.num_samples
+    env = open("src\mission_planner\prm\environment.txt", "r")
+    # l1 : Current and Destination
     l1 = env.readline().split(";")
 
-    current = list(map(int, l1[0].split(",")))
-    destination = list(map(int, l1[1].split(",")))
+    current = list(map(float, l1[0].split(",")))
+    destinations = np.array(list(map(float, l1[1].split(",")))).reshape(-1,2)
+    destinations = np.ndarray.tolist(destinations)
 
-    print("Current: {} Destination: {}".format(current, destination))
+    print("Current: {} Destinations: {}".format(current, destinations))
 
     print("****Obstacles****")
-    allObs = []
+    # 모든 장애물들
+    print("Geese crossing")   
+    print("I'm proud of KAIST")
+    all_obs = []
     for l in env:
         if(";" in l):
             line = l.strip().split(";")
-            topLeft = list(map(int, line[0].split(",")))
-            bottomRight = list(map(int, line[1].split(",")))
-            obs = Obstacle(topLeft, bottomRight)
-            obs.printFullCords()
-            allObs.append(obs)
+            top_left = list(map(int, line[0].split(",")))
+            bottom_right = list(map(int, line[1].split(",")))
+            obs = Obstacle(top_left, bottom_right)
+            obs.print_full_coordinates()
+            all_obs.append(obs)
 
     utils = Utils()
-    utils.drawMap(allObs, current, destination)
+    utils.draw_map(all_obs, current, destinations)
 
-    prm = PRMController(numSamples, allObs, current, destination)
+    prm = Prmcontroller(num_samples, all_obs, current, destinations)
     # Initial random seed to try
-    initialRandomSeed = 0
-    prm.runPRM(initialRandomSeed)
+    initialRandomSeed = 27
+    prm.run_prm(initialRandomSeed)
 
 
 if __name__ == '__main__':
+    # prm의 결과가 이제 총 경로의 길이가 나오도록 코드 수정.
     main(sys.argv)
+    

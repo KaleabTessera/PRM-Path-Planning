@@ -1,40 +1,39 @@
 import numpy as np
 
-
 class Obstacle:
-    def __init__(self, topLeft, bottomRight):
-        self.topLeft = topLeft
-        self.bottomRight = bottomRight
-        self.calcFullCord()
+    def __init__(self, top_left, bottom_right):
+        self.top_left = top_left
+        self.bottom_right = bottom_right
+        self.calculate_full_coordinates()
 
-    def printFullCords(self):
-        print(self.topLeft, self.topRight, self.bottomLeft, self.bottomRight)
+    def print_full_coordinates(self):
+        print(self.top_left, self.top_right, self.bottom_left, self.bottom_right)
 
-    def calcFullCord(self):
-        otherP1 = [self.topLeft[0], self.bottomRight[1]]
-        otherP2 = [self.bottomRight[0], self.topLeft[1]]
+    def calculate_full_coordinates(self):
+        other_p1 = [self.top_left[0], self.bottom_right[1]]
+        other_p2 = [self.bottom_right[0], self.top_left[1]]
 
-        points = [self.topLeft, otherP1,
-                  otherP2, self.bottomRight]
+        points = [self.top_left, other_p1,
+                  other_p2, self.bottom_right]
 
-        # Finding correct coords and what part of rectangle they represent - we can't always assume we receive the top left and bottomRight
         x = [item[0] for item in points]
         y = [item[1] for item in points]
 
-        minX = np.min(x)
-        minY = np.min(y)
+        min_x = np.min(x)
+        min_y = np.min(y)
 
-        maxX = np.max(x)
-        maxY = np.max(y)
+        max_x = np.max(x)
+        max_y = np.max(y)
 
-        self.topRight = np.array([maxX, maxY])
-        self.bottomLeft = np.array([minX, minY])
+        self.top_right = np.array([max_x, max_y])
+        self.bottom_left = np.array([min_x, min_y])
 
-        self.topLeft = np.array([minX, maxY])
-        self.bottomRight = np.array([maxX, minY])
+        self.top_left = np.array([min_x, max_y])
+        self.bottom_right = np.array([max_x, min_y])
 
-        self.allCords = [self.topLeft, self.topRight,
-                         self.bottomLeft, self.bottomRight]
+        self.all_coordinates = [self.top_left, self.top_right,
+                                self.bottom_left, self.bottom_right]
 
-        self.width = self.topRight[0] - self.topLeft[0]
-        self.height = self.topRight[1] - self.bottomRight[1]
+        self.width = self.top_right[0] - self.top_left[0]
+        self.height = self.top_right[1] - self.bottom_right[1]
+
