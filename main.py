@@ -25,7 +25,8 @@ def main(args):
 
     print("****Obstacles****")
     # 모든 장애물들
-    print("Geese crossing")
+    print("Geese crossing")   
+    print("I'm proud of KAIST")
     all_obs = []
     for l in env:
         if(";" in l):
